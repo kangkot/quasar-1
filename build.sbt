@@ -61,6 +61,17 @@ lazy val buildSettings = commonBuildSettings ++ Seq(
 
   console := { (console in Test).value }) // console alias test:console
 
+val targetSettings = Seq(
+  target := {
+    import java.io.File
+
+    val root = (baseDirectory in ThisBuild).value.getAbsolutePath
+    val ours = baseDirectory.value.getAbsolutePath
+
+    new File(root + File.separator + ".targets" + File.separator + ours.substring(root.length))
+  }
+)
+
 // In Travis, the processor count is reported as 32, but only ~2 cores are
 // actually available to run.
 concurrentRestrictions in Global := {
@@ -173,6 +184,7 @@ lazy val foundation = project
   .settings(name := "quasar-foundation-internal")
   .settings(commonSettings)
   .settings(publishTestsSettings)
+  .settings(targetSettings)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](version, ScoverageKeys.coverageEnabled, isCIBuild, isIsolatedEnv, exclusiveTestTag),
     buildInfoPackage := "quasar.build",
@@ -190,6 +202,7 @@ lazy val ejson = project
   .dependsOn(foundation % BothScopes)
   .settings(libraryDependencies ++= Dependencies.ejson)
   .settings(commonSettings)
+  .settings(targetSettings)
   .enablePlugins(AutomateHeaderPlugin)
 
 lazy val effect = project
@@ -197,6 +210,7 @@ lazy val effect = project
   .dependsOn(foundation % BothScopes)
   .settings(libraryDependencies ++= Dependencies.effect)
   .settings(commonSettings)
+  .settings(targetSettings)
   .enablePlugins(AutomateHeaderPlugin)
 
 /** Somewhat Quasar- and MongoDB-specific JavaScript implementations.
@@ -205,6 +219,7 @@ lazy val js = project
   .settings(name := "quasar-js-internal")
   .dependsOn(foundation % BothScopes)
   .settings(commonSettings)
+  .settings(targetSettings)
   .enablePlugins(AutomateHeaderPlugin)
 
 /** Quasar components shared by both frontend and connector. This includes
@@ -217,6 +232,7 @@ lazy val common = project
   .dependsOn(foundation % BothScopes, ejson % BothScopes, js % BothScopes)
   .settings(commonSettings)
   .settings(publishTestsSettings)
+  .settings(targetSettings)
   .settings(
     ScoverageKeys.coverageMinimum := 79,
     ScoverageKeys.coverageFailOnMinimum := true)
@@ -230,6 +246,7 @@ lazy val core = project
   .dependsOn(frontend % BothScopes, connector % BothScopes, sql)
   .settings(commonSettings)
   .settings(publishTestsSettings)
+  .settings(targetSettings)
   .settings(
     libraryDependencies ++= Dependencies.core,
     ScoverageKeys.coverageMinimum := 79,
@@ -245,6 +262,7 @@ lazy val frontend = project
   .dependsOn(common % BothScopes)
   .settings(commonSettings)
   .settings(publishTestsSettings)
+  .settings(targetSettings)
   .settings(
     libraryDependencies ++= Dependencies.frontend,
     ScoverageKeys.coverageMinimum := 79,
@@ -257,6 +275,7 @@ lazy val sql = project
   .settings(name := "quasar-sql-internal")
   .dependsOn(frontend % BothScopes)
   .settings(commonSettings)
+  .settings(targetSettings)
   .enablePlugins(AutomateHeaderPlugin)
 
 // connectors
@@ -272,6 +291,7 @@ lazy val connector = project
     sql      % "test->test")
   .settings(commonSettings)
   .settings(publishTestsSettings)
+  .settings(targetSettings)
   .settings(
     ScoverageKeys.coverageMinimum := 79,
     ScoverageKeys.coverageFailOnMinimum := true)
@@ -283,6 +303,7 @@ lazy val couchbase = project
   .settings(name := "quasar-couchbase-internal")
   .dependsOn(connector % BothScopes)
   .settings(commonSettings)
+  .settings(targetSettings)
   .settings(libraryDependencies ++= Dependencies.couchbase)
   .enablePlugins(AutomateHeaderPlugin)
 
@@ -292,6 +313,7 @@ lazy val marklogic = project
   .settings(name := "quasar-marklogic-internal")
   .dependsOn(connector % BothScopes, marklogicValidation)
   .settings(commonSettings)
+  .settings(targetSettings)
   .settings(resolvers += "MarkLogic" at "http://developer.marklogic.com/maven2")
   .settings(libraryDependencies ++= Dependencies.marklogic)
   .enablePlugins(AutomateHeaderPlugin)
@@ -299,6 +321,7 @@ lazy val marklogic = project
 lazy val marklogicValidation = project.in(file("marklogic-validation"))
   .settings(name := "quasar-marklogic-validation-internal")
   .settings(commonSettings)
+  .settings(targetSettings)
   .settings(libraryDependencies ++= Dependencies.marklogicValidation)
   // TODO: Disabled until a new release of sbt-headers with exclusion is available
   //       as we don't want our headers applied to XMLChar.java
@@ -313,6 +336,7 @@ lazy val mongodb = project
     js        % BothScopes,
     core      % "test->compile")
   .settings(commonSettings)
+  .settings(targetSettings)
   .settings(
     libraryDependencies ++= Dependencies.mongodb,
     wartremoverWarnings in (Compile, compile) --= Seq(
@@ -327,6 +351,7 @@ lazy val postgresql = project
   .settings(name := "quasar-postgresql-internal")
   .dependsOn(connector % BothScopes)
   .settings(commonSettings)
+  .settings(targetSettings)
   .settings(libraryDependencies ++= Dependencies.postgresql)
   .enablePlugins(AutomateHeaderPlugin)
 
@@ -337,6 +362,7 @@ lazy val skeleton = project
   .settings(name := "quasar-skeleton-internal")
   .dependsOn(connector % BothScopes)
   .settings(commonSettings)
+  .settings(targetSettings)
   .enablePlugins(AutomateHeaderPlugin)
 
 /** Implementation of the Spark connector.
@@ -347,6 +373,7 @@ lazy val sparkcore = project
     connector % BothScopes
     )
   .settings(commonSettings)
+  .settings(targetSettings)
   .settings(assemblyJarName in assembly := "sparkcore.jar")
   .settings(parallelExecution in Test := false)
   .settings(
@@ -369,6 +396,7 @@ lazy val interface = project
     sparkcore,
     skeleton)
   .settings(commonSettings)
+  .settings(targetSettings)
   .settings(libraryDependencies ++= Dependencies.interface)
   .enablePlugins(AutomateHeaderPlugin)
 
@@ -380,6 +408,7 @@ lazy val repl = project
   .settings(commonSettings)
   .settings(noPublishSettings)
   .settings(githubReleaseSettings)
+  .settings(targetSettings)
   .settings(
     fork in run := true,
     connectInput in run := true,
@@ -394,6 +423,7 @@ lazy val web = project
   .settings(commonSettings)
   .settings(publishTestsSettings)
   .settings(githubReleaseSettings)
+  .settings(targetSettings)
   .settings(
     mainClass in Compile := Some("quasar.server.Server"),
     libraryDependencies ++= Dependencies.web)
@@ -408,6 +438,7 @@ lazy val it = project
   .dependsOn(web % BothScopes, core % BothScopes)
   .settings(commonSettings)
   .settings(noPublishSettings)
+  .settings(targetSettings)
   .settings(libraryDependencies ++= Dependencies.it)
   // Configure various test tasks to run exclusively in the `ExclusiveTests` config.
   .settings(inConfig(ExclusiveTests)(Defaults.testTasks): _*)

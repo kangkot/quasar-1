@@ -1,4 +1,6 @@
 target/
+.targets/
+
 /it/testing.conf
 .idea
 tmp
