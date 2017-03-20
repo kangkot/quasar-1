@@ -60,9 +60,6 @@ else
   CLEAN=
 fi
 
-echo "clean = $CLEAN"
-exit -1
-
 if [[ "${JOB_NUM##*.}" == "1" ]]; then
   # Compiling `connector` can take awhile, so allow it some extra time when
   # running on travis to avoid having the build killed due to lack of output.
