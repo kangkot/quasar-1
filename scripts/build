@@ -53,13 +53,23 @@ if [[ ${LOCAL_MONGODB:-} == "true" ]] ; then
   echo "Using local MongoDB config"
 fi
 
+# if we're building a pull request, DON'T clean and use the cache instead
+if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
+  CLEAN=clean
+else
+  CLEAN=
+fi
+
+echo "clean = $CLEAN"
+exit -1
+
 if [[ "${JOB_NUM##*.}" == "1" ]]; then
   # Compiling `connector` can take awhile, so allow it some extra time when
   # running on travis to avoid having the build killed due to lack of output.
   if [[ ${TRAVIS:-} ]]; then
-    travis_wait $TRAVIS_MAX_CONNECTOR_COMPILE_MINS "$SBT" -DisIsolatedEnv=${ISOLATED_ENV:=false} ++$TRAVIS_SCALA_VERSION clean coverage connector/test:compile
+    travis_wait $TRAVIS_MAX_CONNECTOR_COMPILE_MINS "$SBT" -DisIsolatedEnv=${ISOLATED_ENV:=false} ++$TRAVIS_SCALA_VERSION $CLEAN coverage connector/test:compile
   else
-    "$SBT" ++$TRAVIS_SCALA_VERSION clean
+    "$SBT" ++$TRAVIS_SCALA_VERSION $CLEAN
   fi
 
   # Require that all header comments are present before proceeding, then
